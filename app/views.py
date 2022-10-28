@@ -13,7 +13,7 @@ class create(APIView):
         data = usersSerializer(data=request.data)
         if data.is_valid():
             data.save()
-            return Response({"message":"User created Successfully!", data:data}, status=200)
+            return Response({"message":"User created Successfully!"}, status=200)
         # user.save()
         # return HttpResponse(status=200)
         
