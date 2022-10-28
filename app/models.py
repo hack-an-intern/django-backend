@@ -7,8 +7,8 @@ from django.db import models
 class User(models.Model):
     name = models.TextField(null=True, blank=True)
     email = models.TextField(null=True, blank=True)
-    fiat = models.IntegerField(default=0)
-    stocks = models.IntegerField(default=0)
+    fiat = models.FloatField(default=0)
+    stocks = models.FloatField(default=0)
 
 
 class LimitOrder(models.Model):
@@ -16,20 +16,20 @@ class LimitOrder(models.Model):
 
     type = models.CharField(max_length=50, choices=TYPE, default='buy')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    price = models.IntegerField(default=0)
-    quantity = models.IntegerField(default=0)
+    price = models.FloatField(default=0)
+    quantity = models.FloatField(default=0)
     time = models.DateTimeField(auto_now_add=True)
 
 
 class CurrentMarketOrder(models.Model):
-    price = models.IntegerField(default=0)
-    quantity = models.IntegerField(default=0)
+    price = models.FloatField(default=0)
+    quantity = models.FloatField(default=0)
     time = models.DateTimeField(auto_now_add=True)
 
 
 class TradeHistory(models.Model):
-    quantity = models.IntegerField(default=0)
-    price = models.IntegerField(default=0)
+    quantity = models.FloatField(default=0)
+    price = models.FloatField(default=0)
     buyer = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='buyer')
     seller = models.ForeignKey(
