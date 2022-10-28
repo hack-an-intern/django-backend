@@ -2,24 +2,26 @@ from django.db.models import fields
 from rest_framework import serializers
 from .models import *
 
-class usersSerializer(serializers.ModelSerializer):
+
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = users
-        fields = '__all__'
-        
-class limit_ordersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = limit_orders
+        model = User
         fields = '__all__'
 
 
-class current_market_orderSerializer(serializers.ModelSerializer):
+class LimitOrderSerializer(serializers.ModelSerializer):
     class Meta:
-        model = current_market_order
-        fields = '__all__'
-        
-class trade_historySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = trade_history
+        model = LimitOrder
         fields = '__all__'
 
+
+class CurrentMarketOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CurrentMarketOrder
+        fields = '__all__'
+
+
+class TradeHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TradeHistory
+        fields = '__all__'
