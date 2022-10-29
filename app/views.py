@@ -85,7 +85,7 @@ class Trade(APIView):
                                 return Response({'message':'order filled'})
 
                 else:
-                    limitsellers=LimitOrder.objects.filter(type='sell').order_by('price','time')
+                    limitsellers=LimitOrder.objects.filter(type='sell').order_by('-price','time')
                     if(ordertype=='limit'):
                         price = request.data['price']
                         if(user.fiat<price*quantity):
