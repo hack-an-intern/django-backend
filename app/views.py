@@ -56,25 +56,27 @@ class Trade(APIView):
                     else:
                         total_quantity=quantity
                         for x in limitbuyers:
-                            if(total_quantity+ x.quantity<quantity):
+                            if(x.quantity<quantity):
                                 user.fiat+=x.price*x.quantity
                                 x.user.stocks+=x.quantity
                                 transaction= TradeHistory.objects.create(type='sell', quantity=x.quantity, price=x.price, user1=x.user, user2=user)
                                 transaction.save()
                                 cmp= CurrentMarketPrice.objects.create(price=x.price, quantity=x.quantity)
                                 cmp.save()
+                                quantity-=x.quantity
                                 x.user.save()
                                 x.delete()
-                                total_quantity+=x.quantity
+                                if(quantity==0):
+                                    break
                             else:
-                                user.fiat+=x.price*(quantity-total_quantity)
-                                x.user.stocks+=(quantity-total_quantity)
-                                transaction= TradeHistory.objects.create(type='sell', quantity=(quantity-total_quantity), price=x.price, user1=x.user, user2=user)
+                                user.fiat+=x.price*quantity
+                                x.user.stocks+=quantity
+                                transaction= TradeHistory.objects.create(type='sell', quantity=quantity, price=x.price, user1=x.user, user2=user)
                                 transaction.save()
-                                cmp= CurrentMarketPrice.objects.create(price=x.price, quantity=(quantity-total_quantity))
+                                cmp= CurrentMarketPrice.objects.create(price=x.price, quantity=quantity)
                                 cmp.save()
                                 x.user.save()
-                                x.quantity-=(quantity-total_quantity)
+                                x.quantity-=quantity
                                 x.save()
                                 break
                         user.stocks-=total_quantity
@@ -114,6 +116,7 @@ class Trade(APIView):
                             for x in limitsellers:
                                 x.user.fiat+=x.price*x.quantity
                                 user.stocks+=x.quantity
+                                user.fiat-=x.price*x.quantity
                                 x.user.save()
                                 user.save()
                                 x.delete()
@@ -124,9 +127,10 @@ class Trade(APIView):
                             return Response({'message':'order partially filled'})
                         else:
                             for x in limitsellers:
-                                if(x.quantity<quantity):
+                                if(x.quantity<=quantity):
                                     x.user.fiat+=x.price*x.quantity
                                     user.stocks+=x.quantity
+                                    user.fiat-=x.price*x.quantity
                                     x.user.save()
                                     user.save()
                                     cmp= CurrentMarketPrice.objects.create(price=x.price, quantity=x.quantity)
@@ -135,10 +139,13 @@ class Trade(APIView):
                                     transaction_history.save()
                                     quantity-=x.quantity
                                     x.delete()
+                                    if(quantity==0):
+                                        break
                                 else:
                                     x.user.fiat+=x.price*quantity
                                     user.stocks+=quantity
                                     x.user.save()
+                                    user.fiat-=x.price*quantity
                                     user.save()
                                     x.quantity-=quantity
                                     x.save()
@@ -149,176 +156,6 @@ class Trade(APIView):
                                     break
                             return Response({'message':'order filled'})
 
-# class Trade(APIView):
-#     def post(self, request):
-#         ordertype = request.data['ordertype']
-#         tradetype = request.data['tradetype']
-#         quantity = request.data['quantity']
-#         price = request.data['price']
-#         id = request.data['id']
-
-#         user = User.objects.get(id=id)
-
-#         if (ordertype == 'limit'):
-#             if tradetype == 'buy' and (user.fiat < price*quantity):
-#                 return Response({'message': 'Insufficient funds'})
-#             if tradetype == 'sell' and (user.stocks < quantity):
-#                 return Response({'message': 'Insufficient stocks'})
-#             if tradetype == 'buy':
-#                 user.fiat = user.fiat - price*quantity
-#             if tradetype == 'sell':
-#                 user.stocks = user.stocks - quantity
-#             # user.blocked_fiat = user.blocked_fiat + price*quantity
-
-#             order = LimitOrder.objects.create(
-#                 type=tradetype, user=user, price=price, quantity=request.data['quantity'])
-#             order.save()
-#             user.save()
-#             serializer = LimitOrderSerializer(order)
-#             return Response(serializer.data)
-
-#         if ordertype == 'market' and tradetype == 'buy':
-#             searchtype = 'sell'
-
-#             Limit = LimitOrder.objects.filter(
-#                 type=searchtype).order_by('price', 'time')
-#             # print(Limit)
-#             totalquantity = Limit.aggregate(Sum('quantity'))['quantity__sum']
-#             if (totalquantity == None):
-#                 totalquantity = 0
-#             print(totalquantity)
-#             if quantity <= totalquantity:
-
-#                 current_quantity = quantity
-#                 current_price = 0
-#                 allhistory = []
-#                 orderdelete = []
-#                 ordersave = []
-#                 current_market_price = []
-#                 # obj = CurrentMarketPrice.objects.all().order_by('time')
-#                 # current_market_price=0
-#                 # if obj!=None:
-#                 #     current_market_price=obj.first().price
-
-#                 counter_limit = 0
-#                 while current_quantity > 0:
-#                     order = Limit[counter_limit]
-#                     if order.quantity > current_quantity:
-#                         order.quantity -= current_quantity
-#                         # order.save()
-#                         ordersave.append(order)
-#                         current_price += order.price * quantity
-#                         tradehistory = TradeHistory.objects.create(type=tradetype,
-#                                                                    quantity=current_quantity, price=order.price, user1=user, user2=order.user)
-#                         cmp = CurrentMarketPrice.objects.create(
-#                             price=order.price, quantity=current_quantity)
-#                         current_market_price.append(cmp)
-
-#                         # tradehistory.save()
-
-#                         current_quantity = 0
-#                         allhistory.append(tradehistory)
-#                         break
-#                     else:
-
-#                         current_quantity -= order.quantity
-#                         current_price += order.price * order.quantity
-
-#                         tradehistory = TradeHistory.objects.create(type=tradetype,
-#                                                                    quantity=order.quantity, price=order.price, user1=user, user2=order.user)
-#                         # tradehistory.save()
-#                         allhistory.append(tradehistory)
-
-#                         cmp = CurrentMarketPrice.objects.create(
-#                             price=order.price, quantity=order.quantity)
-#                         current_market_price.append(cmp)
-
-#                         # order.delete()
-#                         orderdelete.append(order)
-#                         counter_limit += 1
-
-#                 if (user.fiat >= current_price):
-
-#                     user.fiat -= current_price
-#                     user.stocks += quantity
-#                     for x in ordersave:
-#                         x.save()
-#                     for x in orderdelete:
-#                         x.delete()
-#                     for x in allhistory:
-#                         x.save()
-#                     for x in current_market_price:
-#                         x.save()
-
-#                     user.save()
-#                     return Response({'message': 'success'})
-#                 else:
-#                     return Response({'message': 'insufficient funds'})
-
-#             else:
-#                 return Response({'message': 'Buy orders Cant be fulfilled'})
-
-#         if ordertype == 'market' and tradetype == 'sell':
-#             if user.stocks < quantity:
-#                 return Response({'message': 'insufficient stocks'})
-
-#             searchtype = 'buy'
-#             Limit = LimitOrder.objects.filter(
-#                 type=searchtype).order_by('price', 'time')
-
-#             totalquantity = Limit.aggregate(Sum('quantity'))['quantity__sum']
-#             if (totalquantity == None):
-#                 totalquantity = 0
-
-#             print(totalquantity)
-#             if quantity <= totalquantity:
-
-#                 current_quantity = quantity
-#                 current_price = 0
-#                 # allhistory = []
-#                 # orderdelete = []
-#                 # ordersave = []
-
-#                 counter_limit = 0
-#                 while current_quantity > 0:
-#                     order = Limit[counter_limit]
-#                     if order.quantity > current_quantity:
-#                         order.quantity -= current_quantity
-#                         order.user.stocks+=order.quantity
-#                         order.user.save()
-#                         order.save()
-#                         current_price += order.price * quantity
-#                         tradehistory = TradeHistory.objects.create(type=tradetype,
-#                             quantity=current_quantity, price=order.price, user1=order.user, user2=user)
-#                         tradehistory.save()
-#                         cmp = CurrentMarketPrice.objects.create(type=tradetype,
-#                                                                 price=order.price, quantity=current_quantity)
-#                         cmp.save()
-
-#                         current_quantity = 0
-#                         break
-#                     else:
-#                         current_quantity -= order.quantity
-#                         current_price += order.price * order.quantity
-#                         tradehistory = TradeHistory.objects.create(type=tradetype,
-#                                                                    quantity=order.quantity, price=order.price, user1=order.user, user2=user)
-#                         tradehistory.save()
-#                         cmp = CurrentMarketPrice.objects.create(
-#                             price=order.price, quantity=order.quantity)
-#                         cmp.save()
-#                         order.user.stocks+=order.quantity
-#                         order.user.save()
-#                         order.delete()
-#                         counter_limit += 1
-
-#                 user.fiat += current_price
-#                 user.stocks -= quantity
-#                 user.save()
-
-#             else:
-#                 return Response({'message': 'Sell orders Cant be fulfilled'})
-
-#         return Response({'message': 'Hello, world!'})
 
 
 class LimitOrderViewSet(viewsets.ModelViewSet):
@@ -339,6 +176,11 @@ class LimitOrderViewSet(viewsets.ModelViewSet):
         serializer = LimitOrderSerializer(queryset, many=True)
         return Response(serializer.data)
 
+    def destroy(self,request, pk=None):
+        queryset = LimitOrder.objects.all()
+        order = get_object_or_404(queryset, pk=pk)
+        order.delete()
+        return Response({'message': 'Order Deleted'})
 
 class TradeHistoryViewSet(viewsets.ViewSet):
     def list(self, request):
