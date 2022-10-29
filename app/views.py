@@ -36,6 +36,7 @@ class Trade(APIView):
             order = LimitOrder.objects.create(
                 type=tradetype, user=user, price=price, quantity=request.data['quantity'])
             order.save()
+            user.save()
             serializer = LimitOrderSerializer(order)
             return Response(serializer.data)
 
@@ -71,7 +72,7 @@ class Trade(APIView):
                         ordersave.append(order)
                         current_price += order.price * quantity
                         tradehistory = TradeHistory.objects.create(type=tradetype,
-                                                                   quantity=current_quantity, price=order.price, buyer=user, seller=order.user)
+                                                                   quantity=current_quantity, price=order.price, user1=user, user2=order.user)
                         cmp = CurrentMarketPrice.objects.create(
                             price=order.price, quantity=current_quantity)
                         current_market_price.append(cmp)
@@ -87,7 +88,7 @@ class Trade(APIView):
                         current_price += order.price * order.quantity
 
                         tradehistory = TradeHistory.objects.create(type=tradetype,
-                                                                   quantity=order.quantity, price=order.price, buyer=user, seller=order.user)
+                                                                   quantity=order.quantity, price=order.price, user1=user, user2=order.user)
                         # tradehistory.save()
                         allhistory.append(tradehistory)
 
@@ -146,10 +147,12 @@ class Trade(APIView):
                     order = Limit[counter_limit]
                     if order.quantity > current_quantity:
                         order.quantity -= current_quantity
+                        order.user.stocks+=order.quantity
+                        order.user.save()
                         order.save()
                         current_price += order.price * quantity
-                        tradehistory = TradeHistory.objects.create(
-                            quantity=current_quantity, price=order.price, seller=user, buyer=order.user)
+                        tradehistory = TradeHistory.objects.create(type=tradetype,
+                            quantity=current_quantity, price=order.price, user1=order.user, user2=user)
                         tradehistory.save()
                         cmp = CurrentMarketPrice.objects.create(type=tradetype,
                                                                 price=order.price, quantity=current_quantity)
@@ -161,11 +164,13 @@ class Trade(APIView):
                         current_quantity -= order.quantity
                         current_price += order.price * order.quantity
                         tradehistory = TradeHistory.objects.create(type=tradetype,
-                                                                   quantity=order.quantity, price=order.price, seller=user, buyer=order.user)
+                                                                   quantity=order.quantity, price=order.price, user1=order.user, user2=user)
                         tradehistory.save()
                         cmp = CurrentMarketPrice.objects.create(
                             price=order.price, quantity=order.quantity)
                         cmp.save()
+                        order.user.stocks+=order.quantity
+                        order.user.save()
                         order.delete()
                         counter_limit += 1
 
