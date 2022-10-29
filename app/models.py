@@ -13,6 +13,7 @@ class User(models.Model):
     def __str__(self):
         return self.name
 
+
 class LimitOrder(models.Model):
     TYPE = (('buy', 'buy'), ('sell', 'sell'))
 
@@ -21,7 +22,7 @@ class LimitOrder(models.Model):
     price = models.FloatField(default=0)
     quantity = models.FloatField(default=0)
     time = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return f'{self.user.name} {self.type} {self.quantity} stocks at {self.price}'
 
@@ -33,7 +34,7 @@ class CurrentMarketPrice(models.Model):
 
     def __str__(self):
         return f'{self.price} at time {self.time}'
-    
+
 
 class TradeHistory(models.Model):
 
@@ -46,6 +47,7 @@ class TradeHistory(models.Model):
         User, on_delete=models.CASCADE, related_name='buyer')
     user2 = models.ForeignKey(                      # seller
         User, on_delete=models.CASCADE, related_name='seller')
-    
+    time = models.DateTimeField(auto_now_add=True)
+
     def __str__(self):
         return f'{self.user1.name} {self.type} {self.quantity} stocks at {self.price} from {self.user2.name}'
