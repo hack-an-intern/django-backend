@@ -109,8 +109,17 @@ class Trade(APIView):
                         limitorder.save()
                         return Response({'message': 'order placed'})
                 else:
-                    if (limitsellers.count() == 0):
-                        return Response({'message': 'order cannot be placed'}, status=400)
+                    limitsellers=LimitOrder.objects.filter(type='sell').order_by('-price','time')
+                    if(ordertype=='limit'):
+                        price = request.data['price']
+                        if(user.fiat<price*quantity):
+                            return Response({'message':'insufficient funds'})
+                        else:
+                            user.fiat-=price*quantity
+                            user.save()
+                            limitorder = LimitOrder.objects.create(type=tradetype, user=user, quantity=quantity, price=price)
+                            limitorder.save()
+                            return Response({'message':'order placed'})
                     else:
                         current_quantity = quantity
                         total_price = 0
