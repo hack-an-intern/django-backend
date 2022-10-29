@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 router = DefaultRouter()
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'tradehistory', TradeHistoryViewSet, basename='tradehistory')
-router.register(r'price', CurrentMarketOrderViewSet, basename='price')
+router.register(r'price', CurrentMarketPriceViewSet, basename='price')
 router.register(r'limitorder', LimitOrderViewSet, basename='limitorder')
 urlpatterns = router.urls
 urlpatterns += [

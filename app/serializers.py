@@ -15,9 +15,9 @@ class LimitOrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CurrentMarketOrderSerializer(serializers.ModelSerializer):
+class CurrentMarketPriceSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CurrentMarketOrder
+        model = CurrentMarketPrice
         fields = '__all__'
 
 
