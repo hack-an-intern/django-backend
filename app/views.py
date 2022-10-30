@@ -98,9 +98,6 @@ class Trade(APIView):
             else:       # buy
                 limitsellers = LimitOrder.objects.filter(
                     type='sell').order_by('price', 'time')
-                if (limitsellers.count() == 0):
-                    return Response({'message': 'order cannot be placed, As No buyers Available'}, status=400)
-
                 if (ordertype == 'limit'):
                     price = request.data['price']
                     if (user.fiat < price*quantity):
@@ -113,6 +110,8 @@ class Trade(APIView):
                         limitorder.save()
                         return Response({'message': f'order placed for {tquantity} stocks at {price} '}, status=200)
                 else:
+                    if (limitsellers.count() == 0):
+                        return Response({'message': 'order cannot be placed, As No buyers Available'}, status=400)
                     limitsellers = LimitOrder.objects.filter(
                         type='sell').order_by('-price', 'time')
                     if (ordertype == 'limit'):
