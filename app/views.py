@@ -98,6 +98,9 @@ class Trade(APIView):
             else:       # buy
                 limitsellers = LimitOrder.objects.filter(
                     type='sell').order_by('price', 'time')
+                if (limitsellers.count() == 0):
+                    return Response({'message': 'order cannot be placed, As No buyers Available'}, status=400)
+
                 if (ordertype == 'limit'):
                     price = request.data['price']
                     if (user.fiat < price*quantity):
@@ -216,12 +219,12 @@ class LimitOrderViewSet(viewsets.ModelViewSet):
         try:
             queryset = LimitOrder.objects.all()
             order = get_object_or_404(queryset, pk=pk)
-            user=User.objects.get(id=order.user.id)
-            if(order.type=='buy'):
-                user.fiat+=order.price*order.quantity
+            user = User.objects.get(id=order.user.id)
+            if (order.type == 'buy'):
+                user.fiat += order.price*order.quantity
                 user.save()
             else:
-                user.stocks+=order.quantity
+                user.stocks += order.quantity
                 user.save()
             order.delete()
             return Response({'message': 'Order cancelled'})
